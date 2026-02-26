@@ -62,8 +62,8 @@ export function renderApp(
 
 function renderMainApp(state: AppState): string {
   return `
-    <h1>PDF-sammenslåer</h1>
-    <p class="muted">Dra inn filer eller velg PDF-er. Filene behandles lokalt i nettleseren.</p>
+    <h1>PDF-stifteren</h1>
+    <p class="muted">Dra inn filer eller velg PDF-er. Filene behandles lokalt i nettleseren.Har du mange filer kan du nyte animasjonene :-) </p>
 
     <div class="dropzone" id="dropzone" tabindex="0" aria-label="Dra og slipp PDF-filer her">
       <p>Slipp PDF-filer her</p>
