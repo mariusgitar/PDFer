@@ -41,7 +41,7 @@ export function renderOnboarding(state: OnboardingViewState): string {
       Bekreftelseskode
       <input id="onboarding-code" type="text" value="${state.codeInput}" autocomplete="off" ${solved ? '' : 'disabled'} />
     </label>
-    <button id="onboarding-continue" class="button primary" ${solved ? '' : 'disabled'}>Fortsett</button>
+    <button id="onboarding-continue" class="button primary" ${solved && state.codeInput.trim() === dailyCode ? '' : 'disabled'}>Fortsett</button>
     ${state.codeError ? `<p class="error">${state.codeError}</p>` : ''}
   `;
 }
