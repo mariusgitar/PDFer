@@ -122,6 +122,7 @@ const rerender = (): void => {
       onOnboardingCodeInput: (value) => {
         onboardingCodeInput = value;
         onboardingCodeError = null;
+        rerender();
       },
       onOnboardingContinue: () => {
         const solved = isSolved(challengeState);
