@@ -42,13 +42,14 @@ Eksempel for dette repoet:
 
 Workflow finnes i `.github/workflows/deploy.yml`.
 
-> Merk: workflowen bruker `npm ci` når `package-lock.json` finnes. Hvis lockfil mangler, faller den tilbake til `npm install` slik at build fortsatt kan kjøre.
+> Merk: workflowen trigger på både `main` og `master`, og bruker `npm ci` når `package-lock.json` finnes (ellers `npm install`).
+
 
 ### Første gangs oppsett på GitHub
 
 1. Gå til **Settings → Pages**.
 2. Velg **Build and deployment source: GitHub Actions**.
-3. Push til `main` for å trigge deploy.
+3. Push til `main` (eller `master`) for å trigge deploy.
 
 ## Viktig om Vite base path
 
