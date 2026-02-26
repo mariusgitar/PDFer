@@ -42,6 +42,8 @@ Eksempel for dette repoet:
 
 Workflow finnes i `.github/workflows/deploy.yml`.
 
+> Merk: workflowen bruker `npm ci` når `package-lock.json` finnes. Hvis lockfil mangler, faller den tilbake til `npm install` slik at build fortsatt kan kjøre.
+
 ### Første gangs oppsett på GitHub
 
 1. Gå til **Settings → Pages**.
