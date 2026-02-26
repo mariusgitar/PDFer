@@ -18,7 +18,7 @@ En enkel app for ansatte som vil slå sammen flere PDF-filer direkte i nettleser
 
 Etter disclaimer vises en minioppgave første gang:
 
-1. Sorter fem fiktive PDF-filer i riktig rekkefølge (01 → 05) med opp/ned-knapper.
+1. Sorter tre fiktive PDF-filer i riktig rekkefølge (01 → 03) med opp/ned-knapper.
 2. Når rekkefølgen er riktig, vises en kort dagskode.
 3. Skriv inn koden og trykk **Fortsett** for å låse opp verktøyet.
 

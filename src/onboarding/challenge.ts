@@ -10,9 +10,7 @@ export interface ChallengeState {
 export const TARGET_ORDER: string[] = [
   '01_Forside.pdf',
   '02_Innhold.pdf',
-  '03_Vedlegg_A.pdf',
-  '04_Vedlegg_B.pdf',
-  '05_Signatur.pdf'
+  '03_Vedlegg_A.pdf'
 ];
 
 export function createInitialChallengeState(): ChallengeState {
@@ -20,9 +18,7 @@ export function createInitialChallengeState(): ChallengeState {
     items: [
       { id: '03', label: '03_Vedlegg_A.pdf' },
       { id: '01', label: '01_Forside.pdf' },
-      { id: '05', label: '05_Signatur.pdf' },
-      { id: '02', label: '02_Innhold.pdf' },
-      { id: '04', label: '04_Vedlegg_B.pdf' }
+      { id: '02', label: '02_Innhold.pdf' }
     ]
   };
 }
