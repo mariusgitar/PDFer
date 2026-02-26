@@ -34,6 +34,7 @@ export function renderApp(
 ): void {
   container.innerHTML = `
     <main class="app-shell">
+      <div class="merge-wave ${state.status === 'merging' ? 'active' : ''}" aria-hidden="true"></div>
       <section class="card">
         ${viewState.currentView === 'onboarding' ? renderOnboarding(viewState.onboarding) : renderMainApp(state)}
       </section>

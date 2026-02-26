@@ -19,6 +19,42 @@ body {
   padding: 3rem 1rem;
 }
 
+
+.merge-wave {
+  position: fixed;
+  inset: auto -20% -220px;
+  height: 380px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 180ms ease;
+}
+
+.merge-wave::before,
+.merge-wave::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 46% 54% 55% 45% / 41% 42% 58% 59%;
+  background: radial-gradient(circle at 30% 20%, rgba(36, 89, 255, 0.28), rgba(36, 89, 255, 0.05) 65%, transparent 70%);
+  animation: wave-drift 7s linear infinite;
+}
+
+.merge-wave::after {
+  animation-duration: 10s;
+  transform: translateY(18px) scale(1.06);
+  opacity: 0.75;
+}
+
+.merge-wave.active {
+  opacity: 1;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+}
+
 .card {
   background: #fff;
   border-radius: 1rem;
@@ -247,5 +283,18 @@ h1 {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+
+@keyframes wave-drift {
+  0% {
+    transform: translateX(-2%) rotate(0deg);
+  }
+  50% {
+    transform: translateX(2%) rotate(180deg);
+  }
+  100% {
+    transform: translateX(-2%) rotate(360deg);
   }
 }

@@ -19,7 +19,7 @@ export function renderOnboarding(state: OnboardingViewState): string {
 
   return `
     <h1>Første gang: sett filene i riktig rekkefølge</h1>
-    <p class="muted">Minioppgave (20–30 sek): Sorter filene med opp/ned-knapper slik at rekkefølgen blir 01 til 05.</p>
+    <p class="muted">Minioppgave (20–30 sek): Sorter filene med opp/ned-knapper slik at rekkefølgen blir 01 til 03.</p>
     <ul class="file-list" aria-label="Onboarding-rekkefølge">
       ${state.challenge.items
         .map(
