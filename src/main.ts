@@ -1,8 +1,8 @@
 import './styles/main.css';
 import { mergePdfFiles } from './pdf/merge';
-import { createPartPdf } from './onboarding/pdfs';
+import { computeDailyCode } from './onboarding/dailyCode';
+import { createInitialChallengeState, isSolved, moveDown, moveUp, type ChallengeState } from './onboarding/challenge';
 import { isOnboardingDone, setOnboardingDone } from './onboarding/onboarding';
-import { computeDailyWord } from './onboarding/word';
 import { isPdfFile, sanitizeFileName, triggerDownload } from './ui/dom';
 import { acceptDisclaimer, isDisclaimerAccepted } from './ui/disclaimer';
 import { type AppView, renderApp } from './ui/render';
@@ -26,8 +26,9 @@ if (!app) {
 
 let state: AppState = createInitialState();
 let currentView: AppView = isDisclaimerAccepted() ? (isOnboardingDone() ? 'app' : 'onboarding') : 'disclaimer';
-let onboardingInput = '';
-let onboardingError: string | null = null;
+let challengeState: ChallengeState = createInitialChallengeState();
+let onboardingCodeInput = '';
+let onboardingCodeError: string | null = null;
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const arrayBuffer = new ArrayBuffer(bytes.byteLength);
@@ -46,8 +47,11 @@ const rerender = (): void => {
     state,
     {
       currentView,
-      onboardingInput,
-      onboardingError
+      onboarding: {
+        challenge: challengeState,
+        codeInput: onboardingCodeInput,
+        codeError: onboardingCodeError
+      }
     },
     {
       onSelectFiles: (files) => {
@@ -110,27 +114,36 @@ const rerender = (): void => {
         closeApp();
         rerender();
       },
-      onDownloadPart: async (part) => {
-        const word = computeDailyWord();
-        const bytes = await createPartPdf(part, word);
-        const buffer = toArrayBuffer(bytes);
-        triggerDownload(new Blob([buffer], { type: 'application/pdf' }), `onboarding-del-${part}.pdf`);
+      onOnboardingMove: (id, direction) => {
+        challengeState = direction === 'up' ? moveUp(challengeState, id) : moveDown(challengeState, id);
+        onboardingCodeError = null;
+        rerender();
       },
-      onOnboardingInput: (value) => {
-        onboardingInput = value;
+      onOnboardingCodeInput: (value) => {
+        onboardingCodeInput = value;
+        onboardingCodeError = null;
+        rerender();
       },
-      onUnlockOnboarding: () => {
-        const expectedWord = computeDailyWord();
-        if (onboardingInput.trim().toUpperCase() !== expectedWord) {
-          onboardingError = 'Feil ord. Prøv igjen etter å ha åpnet den sammenslåtte PDF-en.';
+      onOnboardingContinue: () => {
+        const solved = isSolved(challengeState);
+        const expectedCode = computeDailyCode();
+
+        if (!solved) {
+          onboardingCodeError = 'Sorter filene riktig før du fortsetter.';
           rerender();
           return;
         }
 
-        onboardingError = null;
-        onboardingInput = '';
+        if (onboardingCodeInput.trim() !== expectedCode) {
+          onboardingCodeError = 'Koden stemmer ikke. Sjekk koden som vises.';
+          rerender();
+          return;
+        }
+
         setOnboardingDone();
         currentView = 'app';
+        onboardingCodeInput = '';
+        onboardingCodeError = null;
         rerender();
       }
     }

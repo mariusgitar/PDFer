@@ -18,12 +18,11 @@ En enkel app for ansatte som vil slå sammen flere PDF-filer direkte i nettleser
 
 Etter disclaimer vises en minioppgave første gang:
 
-1. Last ned “Del A” og “Del B”.
-2. Slå sammen A + B i riktig rekkefølge.
-3. Åpne den sammenslåtte PDF-en og finn dagens nøkkelord.
-4. Skriv ordet for å låse opp verktøyet.
+1. Sorter fem fiktive PDF-filer i riktig rekkefølge (01 → 05) med opp/ned-knapper.
+2. Når rekkefølgen er riktig, vises en kort dagskode.
+3. Skriv inn koden og trykk **Fortsett** for å låse opp verktøyet.
 
-Onboarding og disclaimer lagres i localStorage per nettleser.
+Onboarding og disclaimer lagres i localStorage per nettleser (`pdfmerger_onboarding_done`, `pdfmerger_disclaimer_accepted`).
 
 ## Funksjoner
 

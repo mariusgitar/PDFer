@@ -1,4 +1,5 @@
 import { MAX_FILES, MAX_TOTAL_BYTES } from '../config/limits';
+import { bindOnboardingEvents, renderOnboarding, type OnboardingViewState } from '../onboarding/view';
 import { formatFileSizeMb } from './dom';
 import type { AppState } from './state';
 import { getUsageText } from './state';
@@ -13,17 +14,16 @@ export interface RenderHandlers {
   onMerge: () => void;
   onAcceptDisclaimer: () => void;
   onCancelDisclaimer: () => void;
-  onDownloadPart: (part: 'A' | 'B') => void;
-  onOnboardingInput: (value: string) => void;
-  onUnlockOnboarding: () => void;
+  onOnboardingMove: (id: string, direction: 'up' | 'down') => void;
+  onOnboardingCodeInput: (value: string) => void;
+  onOnboardingContinue: () => void;
 }
 
 export type AppView = 'disclaimer' | 'onboarding' | 'app';
 
 export interface RenderViewState {
   currentView: AppView;
-  onboardingInput: string;
-  onboardingError: string | null;
+  onboarding: OnboardingViewState;
 }
 
 export function renderApp(
@@ -35,7 +35,7 @@ export function renderApp(
   container.innerHTML = `
     <main class="app-shell">
       <section class="card">
-        ${viewState.currentView === 'onboarding' ? renderOnboarding(viewState) : renderMainApp(state)}
+        ${viewState.currentView === 'onboarding' ? renderOnboarding(viewState.onboarding) : renderMainApp(state)}
       </section>
     </main>
     ${viewState.currentView === 'disclaimer' ? renderDisclaimerModal() : ''}
@@ -48,12 +48,11 @@ export function renderApp(
   }
 
   if (viewState.currentView === 'onboarding') {
-    container.querySelector<HTMLButtonElement>('#download-part-a')?.addEventListener('click', () => handlers.onDownloadPart('A'));
-    container.querySelector<HTMLButtonElement>('#download-part-b')?.addEventListener('click', () => handlers.onDownloadPart('B'));
-    container.querySelector<HTMLInputElement>('#onboarding-word')?.addEventListener('input', (event) => {
-      handlers.onOnboardingInput((event.target as HTMLInputElement).value);
+    bindOnboardingEvents(container, {
+      onMove: handlers.onOnboardingMove,
+      onCodeInput: handlers.onOnboardingCodeInput,
+      onContinue: handlers.onOnboardingContinue
     });
-    container.querySelector<HTMLButtonElement>('#unlock-onboarding')?.addEventListener('click', handlers.onUnlockOnboarding);
     return;
   }
 
@@ -137,24 +136,6 @@ function renderDisclaimerModal(): string {
         </div>
       </section>
     </div>
-  `;
-}
-
-function renderOnboarding(viewState: RenderViewState): string {
-  return `
-    <h1>Første gang: en 20-sekunders minioppgave</h1>
-    <p class="muted">For å låse opp verktøyet, last ned to små PDF-er og slå dem sammen i riktig rekkefølge (A før B).</p>
-    <div class="onboarding-actions">
-      <button id="download-part-a" class="button secondary">Last ned del A</button>
-      <button id="download-part-b" class="button secondary">Last ned del B</button>
-    </div>
-    <p>Åpne den sammenslåtte PDF-en. Finn ordet på side 1 og skriv det inn her:</p>
-    <label class="field">
-      Dagens nøkkelord
-      <input id="onboarding-word" type="text" value="${viewState.onboardingInput}" autocomplete="off" />
-    </label>
-    <button id="unlock-onboarding" class="button primary">Lås opp</button>
-    ${viewState.onboardingError ? `<p class="error">${viewState.onboardingError}</p>` : ''}
   `;
 }
 
