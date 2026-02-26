@@ -78,7 +78,6 @@ const rerender = (): void => {
       },
       onOutputNameChange: (value) => {
         state = setOutputFileName(state, sanitizeFileName(value));
-        rerender();
       },
       onMerge: async () => {
         if (state.files.length < 2) {
