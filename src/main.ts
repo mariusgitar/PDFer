@@ -22,6 +22,12 @@ if (!app) {
 
 let state: AppState = createInitialState();
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const arrayBuffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(arrayBuffer).set(bytes);
+  return arrayBuffer;
+}
+
 const rerender = (): void => {
   renderApp(app, state, {
     onSelectFiles: (files) => {
@@ -64,7 +70,8 @@ const rerender = (): void => {
 
         const mergedBytes = await mergePdfFiles(state.files.map((item) => item.file));
         const outputName = sanitizeFileName(state.outputFileName);
-        triggerDownload(new Blob([mergedBytes], { type: 'application/pdf' }), outputName);
+        const mergedBuffer = toArrayBuffer(mergedBytes);
+        triggerDownload(new Blob([mergedBuffer], { type: 'application/pdf' }), outputName);
 
         state = setStatus(state, 'done', `Ferdig: ${outputName}`);
         rerender();
