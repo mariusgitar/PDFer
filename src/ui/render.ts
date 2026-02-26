@@ -1,5 +1,7 @@
-import type { AppState } from './state';
+import { MAX_FILES, MAX_TOTAL_BYTES } from '../config/limits';
 import { formatFileSizeMb } from './dom';
+import type { AppState } from './state';
+import { getUsageText } from './state';
 
 export interface RenderHandlers {
   onSelectFiles: (files: FileList | null) => void;
@@ -9,69 +11,154 @@ export interface RenderHandlers {
   onClearAll: () => void;
   onOutputNameChange: (value: string) => void;
   onMerge: () => void;
+  onAcceptDisclaimer: () => void;
+  onCancelDisclaimer: () => void;
+  onDownloadPart: (part: 'A' | 'B') => void;
+  onOnboardingInput: (value: string) => void;
+  onUnlockOnboarding: () => void;
 }
 
-export function renderApp(container: HTMLElement, state: AppState, handlers: RenderHandlers): void {
+export type AppView = 'disclaimer' | 'onboarding' | 'app';
+
+export interface RenderViewState {
+  currentView: AppView;
+  onboardingInput: string;
+  onboardingError: string | null;
+}
+
+export function renderApp(
+  container: HTMLElement,
+  state: AppState,
+  viewState: RenderViewState,
+  handlers: RenderHandlers
+): void {
   container.innerHTML = `
     <main class="app-shell">
       <section class="card">
-        <h1>PDF-sammenslåer</h1>
-        <p class="muted">Dra inn filer eller velg PDF-er. Filene behandles lokalt i nettleseren.</p>
-
-        <div class="dropzone" id="dropzone" tabindex="0" aria-label="Dra og slipp PDF-filer her">
-          <p>Slipp PDF-filer her</p>
-          <label class="button secondary" for="file-input">Velg filer</label>
-          <input id="file-input" type="file" accept="application/pdf" multiple />
-        </div>
-
-        <div class="toolbar">
-          <button class="button ghost" id="clear-all" ${state.files.length === 0 ? 'disabled' : ''}>Tøm alt</button>
-        </div>
-
-        <ul class="file-list" aria-label="Valgte filer">
-          ${
-            state.files.length === 0
-              ? '<li class="empty">Ingen filer valgt ennå.</li>'
-              : state.files
-                  .map(
-                    (item, index) => `
-                      <li class="file-item">
-                        <div class="file-meta">
-                          <strong>${item.file.name}</strong>
-                          <span>${formatFileSizeMb(item.file.size)}</span>
-                        </div>
-                        <div class="file-actions">
-                          <button class="icon-btn" data-action="move-up" data-id="${item.id}" ${index === 0 ? 'disabled' : ''} aria-label="Flytt opp">↑</button>
-                          <button class="icon-btn" data-action="move-down" data-id="${item.id}" ${index === state.files.length - 1 ? 'disabled' : ''} aria-label="Flytt ned">↓</button>
-                          <button class="icon-btn danger" data-action="remove" data-id="${item.id}" aria-label="Fjern fil">✕</button>
-                        </div>
-                      </li>
-                    `
-                  )
-                  .join('')
-          }
-        </ul>
-
-        <label class="field">
-          Output-filnavn
-          <input id="output-name" type="text" value="${state.outputFileName}" />
-        </label>
-
-        <button class="button primary" id="merge-btn" ${state.files.length < 2 || state.status === 'reading' || state.status === 'merging' ? 'disabled' : ''}>
-          Slå sammen
-        </button>
-
-        <div class="status-row">
-          ${state.status === 'reading' || state.status === 'merging' ? '<span class="spinner" aria-hidden="true"></span>' : ''}
-          <p id="status" role="status" aria-live="polite">${state.statusMessage}</p>
-        </div>
-
-        ${state.warningMessage ? `<p class="warning">${state.warningMessage}</p>` : ''}
-        ${state.errorMessage ? `<p class="error">${state.errorMessage}</p>` : ''}
+        ${viewState.currentView === 'onboarding' ? renderOnboarding(viewState) : renderMainApp(state)}
       </section>
     </main>
+    ${viewState.currentView === 'disclaimer' ? renderDisclaimerModal() : ''}
   `;
 
+  if (viewState.currentView === 'disclaimer') {
+    container.querySelector<HTMLButtonElement>('#accept-disclaimer')?.addEventListener('click', handlers.onAcceptDisclaimer);
+    container.querySelector<HTMLButtonElement>('#cancel-disclaimer')?.addEventListener('click', handlers.onCancelDisclaimer);
+    return;
+  }
+
+  if (viewState.currentView === 'onboarding') {
+    container.querySelector<HTMLButtonElement>('#download-part-a')?.addEventListener('click', () => handlers.onDownloadPart('A'));
+    container.querySelector<HTMLButtonElement>('#download-part-b')?.addEventListener('click', () => handlers.onDownloadPart('B'));
+    container.querySelector<HTMLInputElement>('#onboarding-word')?.addEventListener('input', (event) => {
+      handlers.onOnboardingInput((event.target as HTMLInputElement).value);
+    });
+    container.querySelector<HTMLButtonElement>('#unlock-onboarding')?.addEventListener('click', handlers.onUnlockOnboarding);
+    return;
+  }
+
+  bindAppInteractions(container, handlers);
+}
+
+function renderMainApp(state: AppState): string {
+  return `
+    <h1>PDF-sammenslåer</h1>
+    <p class="muted">Dra inn filer eller velg PDF-er. Filene behandles lokalt i nettleseren.</p>
+
+    <div class="dropzone" id="dropzone" tabindex="0" aria-label="Dra og slipp PDF-filer her">
+      <p>Slipp PDF-filer her</p>
+      <label class="button secondary" for="file-input">Velg filer</label>
+      <input id="file-input" type="file" accept="application/pdf" multiple />
+      <p class="usage">${getUsageText(state)}</p>
+      <p class="usage-hint">Grense: maks ${MAX_FILES} filer og ${formatFileSizeMb(MAX_TOTAL_BYTES)} totalt.</p>
+    </div>
+
+    <div class="toolbar">
+      <button class="button ghost" id="clear-all" ${state.files.length === 0 ? 'disabled' : ''}>Tøm alt</button>
+    </div>
+
+    <ul class="file-list" aria-label="Valgte filer">
+      ${
+        state.files.length === 0
+          ? '<li class="empty">Ingen filer valgt ennå.</li>'
+          : state.files
+              .map(
+                (item, index) => `
+                  <li class="file-item">
+                    <div class="file-meta">
+                      <strong>${item.file.name}</strong>
+                      <span>${formatFileSizeMb(item.file.size)}</span>
+                    </div>
+                    <div class="file-actions">
+                      <button class="icon-btn" data-action="move-up" data-id="${item.id}" ${index === 0 ? 'disabled' : ''} aria-label="Flytt opp">↑</button>
+                      <button class="icon-btn" data-action="move-down" data-id="${item.id}" ${index === state.files.length - 1 ? 'disabled' : ''} aria-label="Flytt ned">↓</button>
+                      <button class="icon-btn danger" data-action="remove" data-id="${item.id}" aria-label="Fjern fil">✕</button>
+                    </div>
+                  </li>
+                `
+              )
+              .join('')
+      }
+    </ul>
+
+    <label class="field">
+      Output-filnavn
+      <input id="output-name" type="text" value="${state.outputFileName}" />
+    </label>
+
+    <button class="button primary" id="merge-btn" ${state.files.length < 2 || state.status === 'reading' || state.status === 'merging' ? 'disabled' : ''}>
+      Slå sammen
+    </button>
+
+    <div class="status-row">
+      ${state.status === 'reading' || state.status === 'merging' ? '<span class="spinner" aria-hidden="true"></span>' : ''}
+      <p id="status" role="status" aria-live="polite">${state.statusMessage}</p>
+    </div>
+
+    ${state.noticeMessage ? `<p class="warning">${state.noticeMessage}</p>` : ''}
+    ${state.errorMessage ? `<p class="error">${state.errorMessage}</p>` : ''}
+  `;
+}
+
+function renderDisclaimerModal(): string {
+  return `
+    <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
+      <section class="modal-card">
+        <h2 id="disclaimer-title">Før du bruker verktøyet</h2>
+        <ul>
+          <li>Filene behandles lokalt i nettleseren din (ikke lastes opp).</li>
+          <li>Bruk på eget ansvar.</li>
+          <li>Unngå hemmelige eller svært sensitive dokumenter hvis du er usikker.</li>
+          <li>Store filer kan gjøre nettleseren treg eller krasje.</li>
+        </ul>
+        <div class="modal-actions">
+          <button id="cancel-disclaimer" class="button ghost">Avbryt</button>
+          <button id="accept-disclaimer" class="button primary">Jeg forstår – fortsett</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderOnboarding(viewState: RenderViewState): string {
+  return `
+    <h1>Første gang: en 20-sekunders minioppgave</h1>
+    <p class="muted">For å låse opp verktøyet, last ned to små PDF-er og slå dem sammen i riktig rekkefølge (A før B).</p>
+    <div class="onboarding-actions">
+      <button id="download-part-a" class="button secondary">Last ned del A</button>
+      <button id="download-part-b" class="button secondary">Last ned del B</button>
+    </div>
+    <p>Åpne den sammenslåtte PDF-en. Finn ordet på side 1 og skriv det inn her:</p>
+    <label class="field">
+      Dagens nøkkelord
+      <input id="onboarding-word" type="text" value="${viewState.onboardingInput}" autocomplete="off" />
+    </label>
+    <button id="unlock-onboarding" class="button primary">Lås opp</button>
+    ${viewState.onboardingError ? `<p class="error">${viewState.onboardingError}</p>` : ''}
+  `;
+}
+
+function bindAppInteractions(container: HTMLElement, handlers: RenderHandlers): void {
   const fileInput = container.querySelector<HTMLInputElement>('#file-input');
   const dropzone = container.querySelector<HTMLElement>('#dropzone');
   const clearAllButton = container.querySelector<HTMLButtonElement>('#clear-all');

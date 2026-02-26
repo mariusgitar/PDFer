@@ -2,9 +2,28 @@
 
 En enkel app for ansatte som vil slå sammen flere PDF-filer direkte i nettleseren.
 
-## Personvern
+## Personvern og ansvar
 
-Filene **forlater ikke maskinen**. All behandling skjer lokalt i nettleseren med `pdf-lib`.
+- Filene **forlater ikke maskinen**. All behandling skjer lokalt i nettleseren med `pdf-lib`.
+- Bruk på eget ansvar.
+- Unngå hemmelige eller svært sensitive dokumenter hvis du er usikker.
+
+## Begrensninger (rate limiting i UI)
+
+- Maks antall filer: **25**
+- Maks total størrelse: **200 MB**
+- Hvis grensen overskrides, blir ekstra filer avvist med tydelig melding.
+
+## Førstegangs-onboarding
+
+Etter disclaimer vises en minioppgave første gang:
+
+1. Last ned “Del A” og “Del B”.
+2. Slå sammen A + B i riktig rekkefølge.
+3. Åpne den sammenslåtte PDF-en og finn dagens nøkkelord.
+4. Skriv ordet for å låse opp verktøyet.
+
+Onboarding og disclaimer lagres i localStorage per nettleser.
 
 ## Funksjoner
 
@@ -19,7 +38,6 @@ Filene **forlater ikke maskinen**. All behandling skjer lokalt i nettleseren med
 - Sammenslåing i valgt rekkefølge.
 - Statusvisning: Leser filer, Slår sammen, Ferdig.
 - Feilhåndtering for ugyldige PDF-filer.
-- Advarsel for totalstørrelse over 200 MB.
 
 ## Lokal utvikling
 
@@ -43,7 +61,6 @@ Eksempel for dette repoet:
 Workflow finnes i `.github/workflows/deploy.yml`.
 
 > Merk: workflowen trigger på både `main` og `master`, og bruker `npm ci` når `package-lock.json` finnes (ellers `npm install`).
-
 
 ### Første gangs oppsett på GitHub
 

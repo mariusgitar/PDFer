@@ -1,3 +1,7 @@
+import { MAX_FILES, MAX_TOTAL_BYTES } from '../config/limits';
+import { formatFileSizeMb, getUsageTone } from './dom';
+import { validateIncomingFiles } from './validate';
+
 export type MergeStatus = 'idle' | 'reading' | 'merging' | 'done' | 'error';
 
 export interface PdfFileItem {
@@ -11,11 +15,10 @@ export interface AppState {
   status: MergeStatus;
   statusMessage: string;
   errorMessage: string | null;
-  warningMessage: string | null;
+  noticeMessage: string | null;
 }
 
 const DEFAULT_OUTPUT = 'merged.pdf';
-const LARGE_FILE_WARNING_BYTES = 200 * 1024 * 1024;
 
 function ensurePdfExtension(fileName: string): string {
   const trimmed = fileName.trim();
@@ -33,27 +36,42 @@ export function createInitialState(): AppState {
     status: 'idle',
     statusMessage: 'Legg til minst to PDF-filer for å slå sammen.',
     errorMessage: null,
-    warningMessage: null
+    noticeMessage: null
   };
 }
 
-export function addFiles(state: AppState, files: File[]): AppState {
-  const pdfFiles = files
-    .filter((file) => file.type === 'application/pdf')
-    .map((file) => ({
-      id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
-      file
-    }));
+export function getTotalBytes(files: PdfFileItem[]): number {
+  return files.reduce((sum, item) => sum + item.file.size, 0);
+}
 
-  const nextFiles = [...state.files, ...pdfFiles];
+export function getUsageText(state: AppState): string {
+  const totalBytes = getTotalBytes(state.files);
+  return `${state.files.length}/${MAX_FILES} filer • ${formatFileSizeMb(totalBytes)} / ${formatFileSizeMb(MAX_TOTAL_BYTES)}`;
+}
+
+export function addFiles(state: AppState, files: File[]): AppState {
+  const validation = validateIncomingFiles(state.files, files);
+  const acceptedItems = validation.accepted.map((file) => ({
+    id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+    file
+  }));
+
+  const nextFiles = [...state.files, ...acceptedItems];
+  const rejectedMessage =
+    validation.rejected.length > 0
+      ? `Noen filer ble avvist: ${validation.rejected
+          .slice(0, 3)
+          .map((item) => `${item.file.name} (${item.reason})`)
+          .join(', ')}${validation.rejected.length > 3 ? '…' : ''}`
+      : null;
 
   return {
     ...state,
     files: nextFiles,
     status: 'idle',
-    statusMessage: 'Filer lagt til. Klar til sammenslåing.',
-    errorMessage: null,
-    warningMessage: getLargeFileWarning(nextFiles)
+    statusMessage: acceptedItems.length > 0 ? 'Filer lagt til. Klar til sammenslåing.' : state.statusMessage,
+    errorMessage: rejectedMessage,
+    noticeMessage: getUsageTone(validation.nextTotalBytes)
   };
 }
 
@@ -63,7 +81,7 @@ export function removeFile(state: AppState, id: string): AppState {
   return {
     ...state,
     files: nextFiles,
-    warningMessage: getLargeFileWarning(nextFiles),
+    noticeMessage: getUsageTone(getTotalBytes(nextFiles)),
     errorMessage: null
   };
 }
@@ -75,7 +93,7 @@ export function clearFiles(state: AppState): AppState {
     status: 'idle',
     statusMessage: 'Alle filer er fjernet.',
     errorMessage: null,
-    warningMessage: null
+    noticeMessage: null
   };
 }
 
@@ -124,13 +142,4 @@ export function setError(state: AppState, message: string): AppState {
     errorMessage: message,
     statusMessage: message
   };
-}
-
-function getLargeFileWarning(files: PdfFileItem[]): string | null {
-  const total = files.reduce((sum, current) => sum + current.file.size, 0);
-  if (total > LARGE_FILE_WARNING_BYTES) {
-    return 'Advarsel: Total filstørrelse er over 200 MB. Sammenslåing kan ta tid.';
-  }
-
-  return null;
 }

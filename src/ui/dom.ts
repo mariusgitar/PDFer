@@ -1,3 +1,5 @@
+import { MAX_TOTAL_BYTES } from '../config/limits';
+
 export function formatFileSizeMb(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
@@ -13,6 +15,14 @@ export function sanitizeFileName(fileName: string): string {
   }
 
   return trimmed.toLowerCase().endsWith('.pdf') ? trimmed : `${trimmed}.pdf`;
+}
+
+export function getUsageTone(totalBytes: number): string | null {
+  if (totalBytes > MAX_TOTAL_BYTES * 0.8) {
+    return 'Du nærmer deg størrelsesgrensen på 200 MB.';
+  }
+
+  return null;
 }
 
 export function triggerDownload(blob: Blob, fileName: string): void {
