@@ -1,18 +1,46 @@
-# PDF-sammenslåer (frontend-only)
+# PDF-stifteren (klientside)
 
-En enkel app for ansatte som vil slå sammen flere PDF-filer direkte i nettleseren.
+Et enkelt verktøy for PDF-behandling direkte i nettleseren.
+
+## Hva appen gjør nå
+
+Appen har to moduser:
+
+1. **Slå sammen PDF**
+   - Last opp flere PDF-filer
+   - Endre filrekkefølge med opp/ned
+   - Eksporter én sammenslått PDF
+
+2. **Organiser sider**
+   - Last opp én PDF
+   - Se sider som kort med miniatyr
+   - Dra og slipp for å endre side-rekkefølge
+   - Slett sider
+   - Eksporter ny PDF med oppdatert innhold
+
+All behandling skjer **kun klientside** i nettleseren med `pdf-lib`. Ingen filopplasting til server.
 
 ## Personvern og ansvar
 
-- Filene **forlater ikke maskinen**. All behandling skjer lokalt i nettleseren med `pdf-lib`.
+- Filene **forlater ikke maskinen**.
 - Bruk på eget ansvar.
 - Unngå hemmelige eller svært sensitive dokumenter hvis du er usikker.
 
-## Begrensninger (rate limiting i UI)
+## Begrensninger
+
+### Merge-modus (UI-grenser)
 
 - Maks antall filer: **25**
 - Maks total størrelse: **200 MB**
-- Hvis grensen overskrides, blir ekstra filer avvist med tydelig melding.
+
+### Organiser sider (MVP)
+
+- Én PDF om gangen
+- Ingen rotering
+- Ingen splitting i flere dokumenter
+- Ingen OCR
+
+Store eller tunge skannede PDF-er kan være krevende i nettleseren og gi treghet på svakere maskiner.
 
 ## Førstegangs-onboarding
 
@@ -24,20 +52,6 @@ Etter disclaimer vises en minioppgave første gang:
 
 Onboarding og disclaimer lagres i localStorage per nettleser (`pdfmerger_onboarding_done`, `pdfmerger_disclaimer_accepted`).
 
-## Funksjoner
-
-- Dra-og-slipp for PDF-filer + knapp for filvalg.
-- Liste over filer med:
-  - navn
-  - størrelse i MB
-  - flytt opp/ned
-  - fjern fil
-  - tøm alt
-- Input for output-filnavn (standard: `merged.pdf`).
-- Sammenslåing i valgt rekkefølge.
-- Statusvisning: Leser filer, Slår sammen, Ferdig.
-- Feilhåndtering for ugyldige PDF-filer.
-
 ## Lokal utvikling
 
 ```bash
@@ -45,27 +59,22 @@ npm install
 npm run dev
 ```
 
-## Test i StackBlitz (ingen lokal installasjon)
+## Manuell test (minimum)
 
-Åpne:
-
-`https://stackblitz.com/github/<GH_USERNAME>/<REPO_NAME>`
-
-Eksempel for dette repoet:
-
-`https://stackblitz.com/github/<GH_USERNAME>/PDFer`
+1. Verifiser at **Slå sammen PDF** fortsatt fungerer (legg til flere filer, slå sammen, last ned).
+2. Bytt mellom moduser med modusvelgeren.
+3. Last opp én PDF i **Organiser sider**.
+4. Verifiser at sider vises som miniatyrkort med sidetall.
+5. Dra en side til en ny posisjon.
+6. Slett en side.
+7. Eksporter ny PDF.
+8. Åpne eksportert PDF og verifiser korrekt siderekkefølge.
+9. Verifiser at slettede sider ikke er med.
+10. Last opp ugyldig fil og verifiser feilmelding.
 
 ## Deploy til GitHub Pages
 
 Workflow finnes i `.github/workflows/deploy.yml`.
-
-> Merk: workflowen trigger på både `main` og `master`, og bruker `npm ci` når `package-lock.json` finnes (ellers `npm install`).
-
-### Første gangs oppsett på GitHub
-
-1. Gå til **Settings → Pages**.
-2. Velg **Build and deployment source: GitHub Actions**.
-3. Push til `main` (eller `master`) for å trigge deploy.
 
 ## Viktig om Vite base path
 
@@ -75,4 +84,4 @@ Workflow finnes i `.github/workflows/deploy.yml`.
 base: '/PDFer/'
 ```
 
-Hvis repo-navnet endres, må du oppdatere `base` til `/<nytt-reponavn>/` for at assets skal lastes riktig på GitHub Pages.
+Hvis repo-navnet endres, må du oppdatere `base` til `/<nytt-reponavn>/`.
