@@ -43,7 +43,10 @@ if (!app) {
 
 let state: AppState = createInitialState();
 let reorderState: ReorderState = createInitialReorderState();
-let currentView: AppView = isDisclaimerAccepted() ? (isOnboardingDone() ? 'app' : 'onboarding') : 'disclaimer';
+// Onboarding-minioppgaven er midlertidig deaktivert.
+// Beholder implementasjonen i koden, men hopper rett til appen etter disclaimer.
+// let currentView: AppView = isDisclaimerAccepted() ? (isOnboardingDone() ? 'app' : 'onboarding') : 'disclaimer';
+let currentView: AppView = isDisclaimerAccepted() ? 'app' : 'disclaimer';
 let mode: ToolMode = 'merge';
 let challengeState: ChallengeState = createInitialChallengeState();
 let onboardingCodeInput = '';
@@ -207,7 +210,9 @@ const rerender = (): void => {
       },
       onAcceptDisclaimer: () => {
         acceptDisclaimer();
-        currentView = isOnboardingDone() ? 'app' : 'onboarding';
+        // Onboarding-minioppgaven er midlertidig deaktivert.
+        // currentView = isOnboardingDone() ? 'app' : 'onboarding';
+        currentView = 'app';
         rerender();
       },
       onCancelDisclaimer: () => {
